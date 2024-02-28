@@ -66,8 +66,11 @@ struct KDCParser: ParsableCommand {
 // MARK: - Errors
 
 extension KDCParser {
+    
+    /// An error which might occur while reading the input
     enum ReadError: LocalizedError {
         
+        /// No input was privided at all (or none could be detected)
         case noInputGiven
         
         
@@ -86,9 +89,18 @@ extension KDCParser {
 
 extension KDCParser {
     
+    /// How verbose the output should be
     enum Verbosity: String, CaseIterable, ExpressibleByArgument {
+        
+        /// Tailor the output Unix-style: Say nothing if things are going well, otherwise only say what went wrong
         case unix
+        
+        /// Output some appropriate amount of text for the typical usecase.
+        ///
+        /// Not enough to debug, but more than nothing.
         case `default`
+        
+        /// Output as much as can be output, usually for debugging purposes
         case verbose
     }
     
@@ -97,7 +109,7 @@ extension KDCParser {
     /// The general behavior desired from this utility
     enum Behavior: String, CaseIterable, ExpressibleByArgument {
         
-        /// Just output a "pass" or "fail" line, along with corresponding exit code, indicating whether this is a valid file
+        /// Just output a "valid" line or error message, along with corresponding exit code, indicating whether this is a valid file
         case validate
         
 //        case convert(outputFormat: OutputFormat)
@@ -117,6 +129,7 @@ extension KDCParser {
 
 private extension KDCParser {
     
+    /// Finds the user's inputted KDC file and returns the contents, or `nil` if no such file/contents could be found
     var input: String? {
         
         func _read(fromFileAt fileUrl: URL) throws -> String? {
@@ -153,11 +166,13 @@ private extension KDCParser {
     }
     
     
+    /// The URL the user provided for the KDC file to read, or `nil` if the user didn't provide any such URL
     var kdcFileUrl: URL? {
         kdcFilePath.map(URL.init(fileURLWithPath:))
     }
     
     
+    /// The path to the KDC file, if any such file path was detected
     var detectedKdcFilePath: String? {
         return if let kdcFilePath {
             kdcFilePath
@@ -171,6 +186,7 @@ private extension KDCParser {
     }
     
     
+    /// All input from stdin, or `nil` if stdin gave no lines or an empty string
     var stdin: String? {
         var stdinLines = [String]()
         
@@ -190,6 +206,10 @@ private extension KDCParser {
 
 
 private extension KDCParser.Behavior {
+    
+    /// Send the given tree to this behavior for processing
+    ///
+    /// - Parameter parseTree: The tree to be processed according to this behavior
     func process(_ parseTree: ParseTree) throws {
         switch self {
         case .validate:
@@ -198,6 +218,9 @@ private extension KDCParser.Behavior {
     }
     
     
+    /// Process according to the `.validate` behavior
+    ///
+    /// - Parameter parseTree: The tree to be validated
     func process_validate(_ parseTree: ParseTree) {
         log(info: "Valid ✅")
     }
