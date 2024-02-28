@@ -174,15 +174,7 @@ private extension KDCParser {
     
     /// The path to the KDC file, if any such file path was detected
     var detectedKdcFilePath: String? {
-        return if let kdcFilePath {
-            kdcFilePath
-        }
-        else if let remainingPath {
-            remainingPath
-        }
-        else {
-            nil
-        }
+        kdcFilePath ?? remainingPath
     }
     
     
@@ -194,9 +186,7 @@ private extension KDCParser {
             stdinLines.append(readFromStdin)
         }
         
-        return stdinLines.isEmpty
-            ? nil
-            : stdinLines
+        return stdinLines
                 .joined()
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .nonEmptyOrNil
