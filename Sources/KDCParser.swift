@@ -57,7 +57,7 @@ struct KDCParser: ParsableCommand {
             This command outputs a `0` exit code for success, or nonzero exit codes for failures.
             """,
         
-        version: "1.2.0-alpha.12"
+        version: "1.2.0"
     )
 }
 
