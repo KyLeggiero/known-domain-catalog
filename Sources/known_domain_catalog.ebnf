@@ -3,16 +3,16 @@ This defines the grammar of a "Known Domain Catalog" file in EBNF.
 
 Known Domain Catalog files should use the ".kdc" file extension to identify themselves.
 
-This defines version 1.1.0 of the grammar.
+This defines version 1.2.0 of the grammar.
 *)
 
 
 
-known_domain_catalog = { entry_line } ;
+known_domain_catalog = entry_line, [ known_domain_catalog ] ;
 
-entry_line = empty_line
+entry_line = domain_entry_line
            | comment_only_line
-           | domain_entry_line
+           | empty_line
            ;
 
 
@@ -20,24 +20,66 @@ empty_line = line_end;
 
 comment_only_line = line_comment, line_end ;
 
-domain_entry_line = domain_name, [ whitespace, url ], [ whitespace, line_comment ], line_end ;
+domain_entry_line = domain_name, [ whitespace ], line_end
+                  | domain_name, whitespace, url, [ whitespace ], line_end
+                  | domain_name, [ whitespace ], line_comment, line_end
+                  | domain_name, whitespace, url, whitespace, line_comment, line_end
+                  ;
 
-line_comment = "#", { comment_char } 
-             | "#";
+line_comment = "#", [ comment_text ] ;
+comment_text = comment_char, [ comment_text ] ;
 
 
 
 (* technical definitions *)
 
-domain_name = { word_char }, [ ".", domain_name ] ;
-
-url = ? see https://www.w3.org/Addressing/URL/5_BNF.html ? ;
+domain_name = hostname ;
 
 line_end = "\n" | "\r\n" ;
 
-whitespace = { inline_whitespace_char } ; 
-inline_whitespace_char = ? inline whitespace characters ? ; (* newline characters are excluded. Should match /\s+/ in PCRE *)
+whitespace = inline_whitespace_char, [ whitespace ] ; 
+inline_whitespace_char = " " | "\t" ;
 
-word_char = ? word characters ? ; (* should match /\w+/ in PCRE *)
+comment_char = "\t" | " " ... "\u{10FFFF}";
 
-comment_char = ? all visible characters ? ; (* should match /.+/ in PCRE *)
+
+
+(* url ; from https://www.w3.org/Addressing/URL/5_BNF.html *)
+
+url = httpaddress ;
+
+httpaddress = protocol, "://", hostport, [ "/", path ], [ "?", search ] ;
+protocol = "http", [ "s" ] ;
+
+hostport = host, [ ":", port ] ;
+
+host = hostname | hostnumber ;
+hostname = ialphas, [ ".", hostname ] ;
+ialphas = ialpha, [ ialpha ] ;
+
+port = digits ;
+
+path = void | (segment, [ "/", path ]) ;
+segment = xalphas ;
+
+search = searchalphas, [ search ] ;
+
+
+
+
+ialpha = alpha, [ xalphas ] ;
+xalphas = xalpha, [ xalphas ] ;
+xalpha = alpha | digit | safe | extra | escape ;
+searchalpha = xalpha | '&' | '=' ;
+searchalphas = searchalpha, [ searchalphas ] ;
+
+alpha = "a" ... "z" | 'A' ... 'Z' ;
+digit = '0' ... '9' ;
+safe = '$' | '-' | '_' | '@' | '.' | '&' | '+' | '-' ;
+extra = '!' | '*' | '"' | "'" | '(' | ')' | ',' ;
+escape = '%', hex, hex ;
+hex = digit | 'a' ... 'f' | 'A' ... 'F' ;
+
+digits = digit, [ digit ] ;
+
+void = "" ;
